@@ -103,7 +103,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openDetail(String category, dynamic item, IconData icon) {
     final id = item.id;
-    if (id == null) return;
+    if (id == null) {
+      // Dials e Espadas vêm da API sem `id`: abre o detalhe direto com os
+      // dados já carregados, usando o nome como identificador (favoritos).
+      Navigator.push(context, MaterialPageRoute(builder: (_) => ResourceDetail(
+        title: item.displayName.toString(),
+        data: Map<String, dynamic>.from(item.data as Map),
+        related: const <Widget>[],
+        category: category,
+        itemId: item.displayName.toString(),
+        icon: icon,
+      )));
+      return;
+    }
 
     late Future<dynamic> detail;
     switch (category) {
