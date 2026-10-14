@@ -191,8 +191,8 @@ class OnePieceService {
   Future<List<Dial>> searchDials(String q) => _search(getDials, q);
   Future<int> countDials() => _count(getDials);
 
-  Future<List<Movie>> getMovies() => _typed(_route('films'), Movie.fromJson);
-  Future<Movie> getMovie(dynamic id) => _one(_route('films'), id, Movie.fromJson);
+  Future<List<Movie>> getMovies() => _typed(_route('movies'), Movie.fromJson);
+  Future<Movie> getMovie(dynamic id) => _one(_route('movies'), id, Movie.fromJson);
   Future<List<Movie>> searchMovies(String q) => _search(getMovies, q);
   Future<int> countMovies() => _count(getMovies);
 

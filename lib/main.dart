@@ -23,7 +23,7 @@ class _OnePieceAppState extends State<OnePieceApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'One Piece Wiki',
+      title: 'One Piece API',
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: _themeMode,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/onepiece_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_header.dart';
@@ -20,6 +21,19 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _index = 0;
+  String _userName = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() => _userName = prefs.getString('profile_name')?.trim() ?? '');
+  }
 
   List<Map<String, dynamic>> _categories() => [
     {'name': 'Personagens', 'icon': Icons.person_rounded, 'color': AppTheme.vermelho, 'count': widget.service.countCharacters()},
@@ -32,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
     {'name': 'Tomos', 'icon': Icons.library_books_rounded, 'color': AppTheme.dourado, 'count': widget.service.countTomes()},
     {'name': 'Dials', 'icon': Icons.graphic_eq_rounded, 'color': AppTheme.azul, 'count': widget.service.countDials()},
     {'name': 'Filmes', 'icon': Icons.movie_creation_rounded, 'color': AppTheme.vermelho, 'count': widget.service.countMovies()},
+    {'name': 'Espadas', 'icon': Icons.gavel_rounded, 'color': AppTheme.marinho, 'count': widget.service.countSwords()},
     {'name': 'Hakis', 'icon': Icons.shield_rounded, 'color': AppTheme.marinho, 'count': widget.service.countHakis()},
     {'name': 'Gears de Luffy', 'icon': Icons.bolt_rounded, 'color': AppTheme.vermelhoEscuro, 'count': widget.service.countLuffyGears()},
     {'name': 'Técnicas de Luffy', 'icon': Icons.flash_on_rounded, 'color': AppTheme.dourado, 'count': widget.service.countLuffyTechniques()},
@@ -76,6 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'Tomos': return {'load': widget.service.getTomes, 'search': widget.service.searchTomes};
       case 'Dials': return {'load': widget.service.getDials, 'search': widget.service.searchDials};
       case 'Filmes': return {'load': widget.service.getMovies, 'search': widget.service.searchMovies};
+      case 'Espadas': return {'load': widget.service.getSwords, 'search': widget.service.searchSwords};
       case 'Hakis': return {'load': widget.service.getHakis, 'search': widget.service.searchHakis};
       case 'Gears de Luffy': return {'load': widget.service.getLuffyGears, 'search': widget.service.searchLuffyGears};
       case 'Técnicas de Luffy': return {'load': widget.service.getLuffyTechniques, 'search': widget.service.searchLuffyTechniques};
@@ -101,6 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'Tomos': detail = widget.service.getTome(id); break;
       case 'Dials': detail = widget.service.getDial(id); break;
       case 'Filmes': detail = widget.service.getMovie(id); break;
+      case 'Espadas': detail = widget.service.getSword(id); break;
       case 'Hakis': detail = widget.service.getHaki(id); break;
       case 'Gears de Luffy': detail = widget.service.getLuffyGear(id); break;
       case 'Técnicas de Luffy': detail = widget.service.getLuffyTechnique(id); break;
@@ -173,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     if (_index == 1) return FavoritesScreen(onHome: () => setState(() => _index = 0), onProfile: () => setState(() => _index = 2));
-    if (_index == 2) return ProfileScreen(onHome: () => setState(() => _index = 0), onFavorites: () => setState(() => _index = 1));
+    if (_index == 2) return ProfileScreen(onHome: () { setState(() => _index = 0); _loadUserName(); }, onFavorites: () => setState(() => _index = 1));
     final categories = _categories();
 
     return Scaffold(
@@ -181,6 +198,10 @@ class _HomeScreenState extends State<HomeScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
         children: [
+          if (_userName.isNotEmpty) ...[
+            Text('Bem-vindo(a), $_userName!', style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 10),
+          ],
           Row(children: [
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
               Text('Um universo.', style: TextStyle(fontSize: 27, fontWeight: FontWeight.w900, height: 1)),
@@ -216,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: AppBottomNav(selectedIndex: _index, onSelected: (value) => setState(() => _index = value)),
+      bottomNavigationBar: AppBottomNav(selectedIndex: _index, onSelected: (value) { setState(() => _index = value); if (value == 0) _loadUserName(); }),
     );
   }
 }

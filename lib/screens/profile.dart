@@ -20,7 +20,8 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _name = TextEditingController();
-  final _age = TextEditingController();
+  final _birthDate = TextEditingController();
+  DateTime? _selectedBirthDate;
   final _anime = TextEditingController();
   final _character = TextEditingController();
   Uint8List? _photo;
@@ -38,7 +39,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
     setState(() {
       _name.text = prefs.getString('profile_name') ?? '';
-      _age.text = prefs.getString('profile_age') ?? '';
+      final savedBirthDate = prefs.getString('profile_birth_date') ?? '';
+      if (savedBirthDate.isNotEmpty) {
+        _birthDate.text = savedBirthDate;
+        final parts = savedBirthDate.split('/');
+        if (parts.length == 3) {
+          _selectedBirthDate = DateTime.tryParse('${parts[2]}-${parts[1].padLeft(2, '0')}-${parts[0].padLeft(2, '0')}');
+        }
+      }
       _anime.text = prefs.getString('profile_anime') ?? '';
       _character.text = prefs.getString('profile_character') ?? '';
       if (encoded != null && encoded.isNotEmpty) _photo = base64Decode(encoded);
@@ -58,10 +66,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _pickBirthDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedBirthDate ?? DateTime(now.year - 18, now.month, now.day),
+      firstDate: DateTime(1900),
+      lastDate: now,
+      helpText: 'Selecione sua data de nascimento',
+      cancelText: 'Cancelar',
+      confirmText: 'Confirmar',
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _selectedBirthDate = picked;
+      _birthDate.text = '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+    });
+  }
+
   Future<void> _save() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('profile_name', _name.text.trim());
-    await prefs.setString('profile_age', _age.text.trim());
+    await prefs.setString('profile_birth_date', _birthDate.text.trim());
     await prefs.setString('profile_anime', _anime.text.trim());
     await prefs.setString('profile_character', _character.text.trim());
     if (_photo != null) await prefs.setString('profile_photo', base64Encode(_photo!));
@@ -72,7 +98,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void dispose() {
     _name.dispose();
-    _age.dispose();
+    _birthDate.dispose();
     _anime.dispose();
     _character.dispose();
     super.dispose();
@@ -114,7 +140,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 17),
                 _field(_name, 'Nome', Icons.person_outline_rounded),
                 const SizedBox(height: 9),
-                _field(_age, 'Idade', Icons.cake_outlined, keyboard: TextInputType.number),
+                TextField(
+                  controller: _birthDate,
+                  readOnly: true,
+                  onTap: _pickBirthDate,
+                  decoration: InputDecoration(
+                    hintText: 'Data de nascimento',
+                    prefixIcon: const Icon(Icons.cake_outlined, size: 18),
+                    suffixIcon: const Icon(Icons.calendar_month_rounded, size: 18),
+                    fillColor: const Color(0xFFFFF3C9),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.dourado)),
+                  ),
+                ),
                 const SizedBox(height: 9),
                 _field(_anime, 'Anime favorito', Icons.tv_outlined),
                 const SizedBox(height: 9),
@@ -124,8 +163,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 13),
-          Card(color: const Color(0xFFFFF3C9), child: const Padding(padding: EdgeInsets.all(13), child: Row(children: [Icon(Icons.cloud_off_rounded, color: AppTheme.vermelho, size: 19), SizedBox(width: 9), Expanded(child: Text('Seu perfil funciona sem internet e fica salvo neste aparelho.', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)))]))),
         ],
       ),
       bottomNavigationBar: AppBottomNav(selectedIndex: 2, onSelected: (index) { if (index == 0) widget.onHome?.call(); if (index == 1) widget.onFavorites?.call(); }),
